@@ -8,11 +8,9 @@ RULE_ENGINE_CONTINUE { 5000000 }
 SYS_INVALID_INPUT_PARAM { -130000 }
 
 # metadata attribute driving policy for user status
-verify_replicas_attribute { "irods::verification::replicas" }
+verify_replicas_attribute { "irods::verification::replica_placement" }
 
-
-
-verify_replica_placement()
+verify_replica_placement(*violations)
 {
     *attr = verify_replicas_attribute
 
@@ -59,7 +57,7 @@ verify_replica_placement()
             } # for resources
 
             if(*matched < *number_of_resources) {
-                writeLine("stdout", "Object *coll_name/*data_name violates the replica placement policy [*resource_list]")
+                *violations = cons("*coll_name/*data_name violates the placement policy " ++ *resource_list, *violations)
             }
 
         } # for objects
