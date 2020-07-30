@@ -1,4 +1,4 @@
-execute_replica_placement_policy {
+execute_replica_number_policy {
     *violations = list()
 
     verify_replica_number(*violations)
