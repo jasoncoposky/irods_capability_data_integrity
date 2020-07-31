@@ -1,12 +1,11 @@
+__all__ = ['verify_replica_placement']
 from genquery import Query, AS_DICT
-
-def get_error_value           ()   : return "ERROR_VALUE"
-def RULE_ENGINE_CONTINUE      ()   : return 5000000
-def SYS_INVALID_INPUT_PARAM   ()   : return -130000
-def verify_replicas_attribute ()   : return "irods::verification::replicas"
+from irods_capability_integrity_utils import *
 
 
 def verify_replica_placement (rule_args, callback, rei):
+
+    violations = split_text_lines( rule_args[0] )
 
     attr = verify_replicas_attribute()
 
@@ -33,10 +32,11 @@ def verify_replica_placement (rule_args, callback, rei):
                 # -- end -- for resources
 
             if matched < number_of_resources:
-                callback.writeLine("stdout", ("Object {coll_name}/{data_name} "
-                                              "violates the replica replacement policy".format(**locals()))
-                                  )
+                violations.append("Object {coll_name}/{data_name} violates the replica replacement policy".format(**locals()))
+
         # -- end -- for objects
 
     # -- end -- for collections
+
+    rule_args [0] = join_text_lines( violations )
 
