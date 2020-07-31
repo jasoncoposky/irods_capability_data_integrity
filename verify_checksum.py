@@ -19,7 +19,7 @@ def verify_replica_checksum (rule_args, callback, rei):
             coll_name = row1['COLL_NAME']
             data_name = row1['DATA_NAME']
 
-            if true() == all_flag:
+            if TRUE() == all_flag:
 
                 for row2 in Query (callback, ['DATA_REPL_NUM', 'DATA_CHECKSUM'], 
                                "COLL_NAME = '{0}' AND DATA_NAME = '{1}'".format(coll_name,data_name), AS_DICT):
