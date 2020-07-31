@@ -6,7 +6,7 @@ def verify_replicas_attribute ()   : return "irods::verification::replica_placem
 def verify_checksum_attribute ()   : return "irods::verification::checksum"
 def verify_replica_number_attribute ()   : return "irods::verification::replica_number"
 
-def true(): return "true"
+def TRUE(): return "true"
 
 def split_text_lines( string_in ) :
     return filter (None, string_in.split("\n"))
