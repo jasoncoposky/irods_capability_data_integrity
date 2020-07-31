@@ -3,9 +3,22 @@ from genquery import Query, AS_DICT
 from irods_capability_integrity_utils import *
 
 
+def checksum_test(callback, object_path, repl_num):
+    try:
+        rv = callback.msiDataObjChksum( object_path,
+                                        "verifyChksum=++++replNum={}".format(repl_num), "" )
+    except RuntimeError as exc :
+        return ('MISMATCH' if "status [USER_CHKSUM_MISMATCH]" in str(exc)
+                else 'OTHER_ERROR')
+
+    return rv['arguments'][2]
+
+
 def verify_replica_checksum (rule_args, callback, rei):
 
     (all_flag,  resource_name,  violations) = rule_args
+
+    violations = split_text_lines( violations )
 
     attr = verify_checksum_attribute()
 
@@ -19,32 +32,22 @@ def verify_replica_checksum (rule_args, callback, rei):
             coll_name = row1['COLL_NAME']
             data_name = row1['DATA_NAME']
 
-            if TRUE() == all_flag:
+            condition = "COLL_NAME = '{0}' AND DATA_NAME = '{1}'" .format( coll_name, data_name)
 
-                for row2 in Query (callback, ['DATA_REPL_NUM', 'DATA_CHECKSUM'], 
-                               "COLL_NAME = '{0}' AND DATA_NAME = '{1}'".format(coll_name,data_name), AS_DICT):
+            if TRUE() != all_flag:
+                condition += " and RESC_NAME = '{0}'".format(resource_name)
 
-                    checksum = row2['DATA_CHECKSUM']
+            for row2 in Query (callback, ['DATA_REPL_NUM', 'DATA_CHECKSUM'], condition, AS_DICT ):
 
-                    retval = callback.msiDataObjChksum("{}/{}".format(coll_name,data_name), 
-                                                       "forceChksum=++++replNum={0}".format(repl_num), "")
-                    out = retval['arguments'][2]
+                checksum = row2['DATA_CHECKSUM']
+                repl_num = row2['DATA_REPL_NUM']
 
-                    if checksum != out: violations.append("{coll_name}/{data_name} violates the checksum policy {out} vs {checksum}".format(**locals()))
-            else:
-                for row2 in Query (callback, ['DATA_REPL_NUM', 'DATA_CHECKSUM'], 
-                               ("COLL_NAME = '{0}' and DATA_NAME = '{1}' "
-                                " and RESC_NAME = '{2}'").format(coll_name,data_name,resource_name), AS_DICT):
+                out = checksum_test (callback, "{}/{}".format(coll_name,data_name), repl_num)
 
-                    checksum = row2['DATA_CHECKSUM']
+                if checksum != out and out == 'MISMATCH':
+                    violations.append("{coll_name}/{data_name} violates the checksum policy {out} vs {checksum}".format(**locals()))
 
-                    retval = callback.msiDataObjChksum("{}/{}".format(coll_name,data_name), 
-                                                       "forceChksum=++++replNum={0}".format(repl_num), "")
-                    out = retval['arguments'][2]
-
-                    if checksum != out: violations.append("{coll_name}/{data_name} violates the checksum policy {out} vs {checksum}".format(**locals()))
-
-                # -- end -- for resources
+            # -- end -- for resources
 
         # -- end -- for objects
 

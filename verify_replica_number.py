@@ -1,10 +1,11 @@
 __all__ = ['verify_replica_number']
 from irods_capability_integrity_utils import *
+from genquery import Query, AS_DICT
 
 def verify_replica_number(rule_args , callback, rei):
 
     violations = split_text_lines( rule_args[0] )
-    attr = verify_replica_number_attribute
+    attr = verify_replica_number_attribute()
 
     # get a list of all matching collections given the metadata attribute
 
@@ -16,7 +17,7 @@ def verify_replica_number(rule_args , callback, rei):
         coll_name = row0['COLL_NAME']
 
         # get a list of all data objects in the given collection
-        for row1 in Query(callback,['COLL_NAME','DATA_NAME'], "COLL_NAME like '{}%'".format(coll_name)):
+        for row1 in Query(callback,['COLL_NAME','DATA_NAME'], "COLL_NAME like '{}%'".format(coll_name), AS_DICT):
             matched = 0
             coll_name = row1['COLL_NAME']
             data_name = row1['DATA_NAME']
