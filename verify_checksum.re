@@ -7,8 +7,11 @@ RULE_ENGINE_CONTINUE { 5000000 }
 # Error code if input is incorrect
 SYS_INVALID_INPUT_PARAM { -130000 }
 
+# Error code if msiDataObjChksum finds a corrupt replica
+USER_CHKSUM_MISMATCH { -314000 }
+
 # metadata attribute driving policy for user status
-verify_checksum_attribute { "irods::verification::checksum" }
+verify_checksum_attribute { "irods::verification::replica_checksum" }
 
 verify_replica_checksum(*all_flag, *resource_name, *violations)
 {
@@ -30,12 +33,13 @@ verify_replica_checksum(*all_flag, *resource_name, *violations)
                 foreach(*row2 in SELECT DATA_REPL_NUM, DATA_CHECKSUM WHERE COLL_NAME = "*coll_name" AND DATA_NAME = "*data_name") {
 
                     *repl_num = *row2.DATA_REPL_NUM
-
                     *checksum = *row2.DATA_CHECKSUM
 
-                    msiDataObjChksum("*coll_name/*data_name", "forceChksum=++++replNum=*repl_num", *out)
+                    *out = ""; *err = errorcode(
+                        msiDataObjChksum("*coll_name/*data_name", "verifyChksum=++++replNum=*repl_num", *out)
+                    )
 
-                    if(*checksum != *out) {
+                    if(*checksum != *out && *err == USER_CHKSUM_MISMATCH) {
                         *violations = cons("*coll_name/*data_name violates the checksum policy *out vs *checksum", *violations)
                     }
 
@@ -45,12 +49,13 @@ verify_replica_checksum(*all_flag, *resource_name, *violations)
                 foreach(*row2 in SELECT DATA_REPL_NUM, DATA_CHECKSUM WHERE COLL_NAME = "*coll_name" AND DATA_NAME = "*data_name" AND RESC_NAME = "*resource_name") {
 
                     *repl_num = *row2.DATA_REPL_NUM
-
-                    msiDataObjChksum("*coll_name/*data_name", "forceChksum=++++replNum=*repl_num", *out)
-
                     *checksum = *row2.DATA_CHECKSUM
 
-                    if(*checksum != *out) {
+                    *out = ""; *err = errorcode(
+                        msiDataObjChksum("*coll_name/*data_name", "verifyChksum=++++replNum=*repl_num", *out)
+                    )
+
+                    if(*checksum != *out && *err == USER_CHKSUM_MISMATCH) {
                         *violations = cons("*coll_name/*data_name violates the checksum policy *out vs *checksum", *violations)
                     }
 
